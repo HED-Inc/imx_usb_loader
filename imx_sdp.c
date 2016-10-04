@@ -40,23 +40,6 @@
 #include "imx_sdp.h"
 int debugmode = 0;
 
-#ifndef WIN32
-
-#define dbg_printf(fmt, args...)	do{ if(debugmode) fprintf(stderr, fmt, ## args); } while(0)
-#else
-
-#ifdef DEBUG
-#define dbg_printf(fmt, ...)	fprintf(stderr, fmt, __VA_ARGS__)
-#else
-#define dbg_printf(fmt, ...)    /* Don't do anything in release builds */
-#endif
-
-#define R_OK	04
-#define access(filename,oflag)	_access(filename,oflag)
-
-
-#define usleep(us)	Sleep((us+999)/1000)
-#endif
 
 
 #define get_min(a, b) (((a) < (b)) ? (a) : (b))
@@ -424,11 +407,13 @@ struct sdp_work *parse_cmd_args(int argc, char * const *argv)
 
 	while (argc > i) {
 		const char *p = argv[i];
-		if (*p == '-') {
+		if (*p == '-') 
+		{
 			char c;
 			p++;
 			c = *p++;
-			if (w == NULL) {
+			if (w == NULL) 
+			{
 				printf("specify file first\n");
 				exit(1);
 			}

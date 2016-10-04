@@ -126,4 +126,23 @@ int DoIRomDownload(struct sdp_dev *dev, struct sdp_work *curr, int verify);
 #define PATH_SEPARATOR	'\\'
 #endif
 
+#ifndef WIN32
+
+#define dbg_printf(fmt, args...)	do{ if(debugmode) fprintf(stderr, fmt, ## args); } while(0)
+#else
+
+#ifdef DEBUG
+#define dbg_printf(fmt, ...)	fprintf(stderr, fmt, __VA_ARGS__)
+#else
+#define dbg_printf(fmt, ...)    /* Don't do anything in release builds */
+#endif
+
+#define R_OK	04
+#define access(filename,oflag)	_access(filename,oflag)
+
+
+#define usleep(us)	Sleep((us+999)/1000)
+#endif
+
+
 #endif /* __IMX_SDP_H__ */

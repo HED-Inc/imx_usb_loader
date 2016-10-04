@@ -56,6 +56,7 @@
 #define close(fd)				_close(fd)
 
 #endif
+#define SYSCONFDIR "/usr/etc"
 
 #include "imx_sdp.h"
 

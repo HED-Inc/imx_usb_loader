@@ -18,24 +18,56 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
-#include <stdio.h>
-#include <sys/types.h>
-#include <time.h>
 
+#ifndef WIN32
 #include <unistd.h>
+#else
+#include <Windows.h>
+#endif
 #include <ctype.h>
+#ifdef WIN32
+#include <io.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <getopt.h>
+//#include <iostream>
 
+#ifndef WIN32
+#include <getopt.h>
+#else
+#include "getopt.h"	// use local re-implementation of getopt
+#endif
+
+#include <fcntl.h>
+
+#ifndef WIN32
+#include <termios.h>
+#include <sys/ioctl.h>
 #include <libusb-1.0/libusb.h>
+#else
+#include "libusb\libusb.h"
+
+#define open(filename,oflag)	_open(filename,oflag)
+#define write(fd,buffer,count)	_write(fd,buffer,count)
+#define read(fd,buffer,count)	_read(fd,buffer,count)
+#define close(fd)				_close(fd)
+
+#endif
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <time.h>
+
+#ifndef SYSCONFDIR
+#define SYSCONFDIR "/usr/etc"
+#endif
 
 #include "imx_sdp.h"
 
 extern int debugmode;
-#define dbg_printf(fmt, args...)	do{ if(debugmode) fprintf(stderr, fmt, ## args); } while(0)
+// #define dbg_printf(fmt, args...)	do{ if(debugmode) fprintf(stderr, fmt, ## args); } while(0)
 
 struct mach_id;
 struct mach_id {
@@ -312,8 +344,8 @@ libusb_device_handle * open_vid_pid(struct mach_id *mach, struct sdp_dev *p_id)
 	libusb_device_handle *h;
 	h = libusb_open_device_with_vid_pid(NULL, mach->vid, mach->pid);
 	if (!h) {
-		printf("%s:Could not open device vid=0x%x pid=0x%x\n", __func__,
-				mach->vid, mach->pid);
+	//	printf("%s:Could not open device vid=0x%x pid=0x%x\n", __func__,
+		//		mach->vid, mach->pid);
 		goto err1;
 	}
 	if (libusb_kernel_driver_active(h, 0))
@@ -422,6 +454,12 @@ int main(int argc, char * const argv[])
 	char const *base_path = get_base_path(argv[0]);
 	char const *conf_path = SYSCONFDIR "/imx-loader.d/";
 
+/*	cout << "In Total There were " << (argc - 1) << " Command Line Arguments.n";
+	for (int vl_iIndex = 1; vl_iIndex<argc; vl_iIndex++)
+	{
+		cout << "Parameter Number " << vl_iIndex << " Had the Value " << argv[vl_iIndex] << ".n";
+	}
+	*/
 	err = parse_opts(argc, argv, &conf_path, &verify, &cmd_head);
 	if (err < 0)
 		return -1;
@@ -447,8 +485,8 @@ int main(int argc, char * const argv[])
 	dev = find_imx_dev(devs, &mach, list);
 	if (dev) {
 		err = libusb_open(dev, &h);
-		if (err)
-			printf("%s:Could not open device vid=0x%x pid=0x%x err=%d\n", __func__, mach->vid, mach->pid, err);
+//		if (err)
+	//		printf("%s:Could not open device vid=0x%x pid=0x%x err=%d\n", __func__, mach->vid, mach->pid, err);
 	}
 	libusb_free_device_list(devs, 1);
 
@@ -456,6 +494,8 @@ int main(int argc, char * const argv[])
 		goto out;
 
 	// Get machine specific configuration file..
+	int len = strlen(mach->file_name);
+	mach->file_name[25] = '\0'; // Null terminate assumtion the file name is standard 
 	conf = conf_file_name(mach->file_name, base_path, conf_path);
 	if (conf == NULL)
 		goto out;
@@ -525,7 +565,8 @@ int main(int argc, char * const argv[])
 			libusb_exit(NULL);
 			for (retry = 0; retry < 10; retry++) {
 				printf("sleeping\n");
-				sleep(3);
+//				sleep(3);
+				Sleep(3);
 				printf("done sleeping\n");
 				h = open_vid_pid(mach, p_id);
 				if (h)
